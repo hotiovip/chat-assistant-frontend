@@ -57,11 +57,28 @@ class ChatService {
       return null;
     }
   }
+  Future<List<String>?> getMessages(String threadId) async {
+    // TODO: Modify below template to gather all messages for the given threadId
 
-  Future<String> send(ChatMessage message) async {
+    try {
+      final response = await _authHttpService.get(_config.messagesEndpoint(threadId));
+      if (response.statusCode != 200) {
+        // Error
+        return null;
+      }
+
+      return null;
+    } catch (e) {
+      log("Exception in getMessages: $e");
+      // Exception
+      return null;
+    }
+  }
+
+  Future<String> send(String threadId, ChatMessage message) async {
     try {
       final response = await _authHttpService.post(
-        _config.sendEndpoint, 
+        _config.sendEndpoint(threadId), 
         body: message.toJson()
       );
 

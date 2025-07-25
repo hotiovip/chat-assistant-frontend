@@ -9,14 +9,23 @@ class Config {
 
   String get userEndpoint => "$apiEndpoint/user";
   String get threadsEndpoint => "$userEndpoint/thread";
-  String get getThreadsEndpoint => "$threadsEndpoint/get";
   String get createThreadEndpoint => "$threadsEndpoint/create";
+  String get getThreadsEndpoint => "$threadsEndpoint/get";
 
   String get chatEndpoint => "$apiEndpoint/chat";
-  String get sendEndpoint => "$chatEndpoint/send";
-  String get fileEndpoint => "$chatEndpoint/file";
+  String get messagesRelativeEndpoint => "/messages";
+  String get sendRelativeEndpoint => "/send";
+  String get fileEndpoint => "";
 
   String get authEndpoint => "$apiEndpoint/auth";
   String get loginEndpoint => "$authEndpoint/login";
   String get isTokenValidEndpoint => "$authEndpoint/token/valid";
+
+  String sendEndpoint(String threadId) {
+    return "$chatEndpoint/$threadId/$sendRelativeEndpoint";
+  }
+
+  String messagesEndpoint(String threadId) {
+    return "$chatEndpoint/$threadId/$messagesRelativeEndpoint";
+  }
 }
