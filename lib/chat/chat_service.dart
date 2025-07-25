@@ -15,20 +15,13 @@ class ChatService {
   Future<String?> createThread() async {
     try {
       final response = await _authHttpService.get(_config.createThreadEndpoint);
-
-      if (response.statusCode != 200) {
-        // Error
-        return null;
-      }
-
-      if (response.body.isNotEmpty) {
+      if (response.body.trim().isNotEmpty) {
         return response.body;
-      }
-      else { // No threads
+      } else {
         return null;
       }
     } catch (e) {
-      log("Exception: $e");
+      log("Exception in createThread: $e");
 
       // Exception
       return null;
@@ -44,14 +37,22 @@ class ChatService {
       }
 
       if (response.body.isNotEmpty) {
-        return response.body as List<String>;
-      }
-      else { // No threads
-        return null;
-      }
-    } catch (e) {
-      log("Exception: $e");
+        // Parse JSON string into a dynamic object
+        final decoded = json.decode(response.body);
 
+        if (decoded is List) {
+          // If it's a list, cast each element to String
+          List<String> threads = decoded.cast<String>();
+
+          if (threads.isNotEmpty) {
+            return threads;
+          }
+        }
+      }
+
+      return null;
+    } catch (e) {
+      log("Exception in getThreads: $e");
       // Exception
       return null;
     }

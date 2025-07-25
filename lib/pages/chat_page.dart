@@ -13,7 +13,7 @@ import 'package:flutter_application/utils.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
-  final String title = "Chat";
+  final String title = "Chats";
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -34,6 +34,16 @@ class _ChatPageState extends State<ChatPage> {
     final List<String>? threadsId = await _chatService.getThreads();
     if (threadsId != null) {
       log(threadsId.toString());
+    }
+    else {
+      log("Thread ID is null. Creating new thread");
+      final String? threadId = await _chatService.createThread();
+      if (threadId != null) {
+        log("Thread ID: $threadId");
+      }
+      else {
+        log("Got null from createThread()");
+      }
     }
     // final loadedMessages = await _loadChat();
     // setState(() {
