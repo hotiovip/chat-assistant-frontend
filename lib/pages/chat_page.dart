@@ -1,14 +1,13 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:typed_data';
-// import 'dart:developer';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application/api/auth_http_service.dart';
 import 'package:flutter_application/chat/chat_service.dart';
 import 'package:flutter_application/chat/chat_message.dart';
 import 'package:flutter_application/chat/role.dart';
+import 'package:flutter_application/chat/run_status.dart';
+import 'package:flutter_application/chat/smooth_typing_indicator.dart';
 import 'package:flutter_application/utils.dart';
 
 class ChatPage extends StatefulWidget {
@@ -35,7 +34,11 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> _loadChatAndSetState() async {
     final List<String>? threadIds = await _chatService.getThreads();
     if (threadIds != null) {
-      _threadIds = threadIds;
+      setState(() {
+        _threadIds = threadIds;
+      });
+
+      _selectThread(_threadIds.first);
     }
     else {
       log("Thread ID is null. Creating new thread");
@@ -47,34 +50,62 @@ class _ChatPageState extends State<ChatPage> {
         log("ERROR: Got null from createThread()");
       }
     }
-    // final loadedMessages = await _loadChat();
-    setState(() {
-      // _messages = loadedMessages;
-      if (_threadIds != null && _threadIds.isNotEmpty) _currentThreadId = _threadIds.first;
-    });
   }
-  Future<List<String>> _loadChat(String threadId) async {
-    
+  Future<void> _selectThread(String threadId) async {
+    if (_currentThreadId == threadId) return;
+
+    _currentThreadId = threadId;
+    final List<ChatMessage>? loadedMessages = await _chatService.getMessages(_currentThreadId);
+    if (loadedMessages != null) {
+      setState(() {
+        _messages = loadedMessages;
+      });
+    }
   }
 
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
-    ChatMessage chatMessage = ChatMessage(role: Role.user, content: text);
+    final userMessage = ChatMessage(role: Role.user, contentList: [text]);
     setState(() {
-      _messages.add(chatMessage);
+      _messages.add(userMessage);
     });
 
     _controller.clear();
 
-    // Get threadId from backend
-    String threadId = await _chatService.send(_currentThreadId, chatMessage);
+    // Send message and get runId
+    String runId = await _chatService.send(_currentThreadId, userMessage);
+    log('Run ID: $runId');
 
-    // Add response as message
-    // setState(() {
-    //   _messages.add(ChatMessage(role: Role.assistant, content: response));
-    // });
+    // Add loading placeholder
+    setState(() {
+      _messages.add(ChatMessage(role: Role.assistant, contentList: ['typing']));
+    });
+
+    // Poll until run is complete
+    RunStatus? status;
+    do {
+      await Future.delayed(Duration(seconds: 2));
+      status = await _chatService.getRunStatus(_currentThreadId, runId);
+    } while (status != RunStatus.completed);
+
+    // Fetch latest messages after completion
+    final updatedMessages = await _chatService.getMessages(_currentThreadId);
+
+    // Replace the placeholder with the actual assistant message
+    if (updatedMessages != null) {
+      // Find the latest assistant message (last in list)
+      final newAssistantMessage = updatedMessages.lastWhere(
+        (m) => m.role == Role.assistant,
+        orElse: () => ChatMessage(role: Role.assistant, contentList: ['(no response)']),
+      );
+
+      setState(() {
+        _messages.removeLast(); // remove the "•••"
+        _messages.add(newAssistantMessage);
+      });
+    }
   }
   Future<void> _pickAndUploadFile() async {
     FilePickerResult? filePickerResult = await pickFile();
@@ -97,15 +128,15 @@ class _ChatPageState extends State<ChatPage> {
       body: Row(
         children: [
           // Left Sidebar List
-          Container(
+          SizedBox(
             width: 250,
             child: ListView.builder(
               itemCount: _threadIds.length, // Replace with your thread list
               itemBuilder: (context, index) {
-                final thread = _threadIds[index]; // Replace with your model
+                final threadId = _threadIds[index]; // Replace with your model
                 return ListTile(
-                  title: Text('Thread ${index + 1}'), // Customize display
-                  onTap: () => _selectThread(thread),
+                  title: Text('Thread $threadId'), // Customize display
+                  onTap: () => _selectThread(threadId),
                 );
               },
             ),
@@ -125,6 +156,29 @@ class _ChatPageState extends State<ChatPage> {
                     itemCount: _messages.length,
                     itemBuilder: (_, index) {
                       final message = _messages[_messages.length - 1 - index];
+
+                      if (message.role == Role.assistant &&
+                          message.contentList.length == 1 &&
+                          message.contentList.first == "typing") {
+                        // Assistant bubble with typing indicator inside
+                        return Align(
+                          alignment: Alignment.centerLeft,  // assistant messages align left
+                          child: Container(
+                            margin: EdgeInsets.symmetric(vertical: 4),
+                            padding: EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.secondary,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: SizedBox(
+                              height: 20,  // adjust this to fit your font size nicely
+                              child: SmoothTypingIndicator(),
+                            ), // your animated dots widget here
+                          ),
+                        );
+                      }
+
+                      // Normal message rendering (user or assistant)
                       return Align(
                         alignment: message.role == Role.user
                             ? Alignment.centerRight
@@ -139,9 +193,9 @@ class _ChatPageState extends State<ChatPage> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
-                            message.content,
+                            message.contentList.first,
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.inversePrimary,
+                              color: Theme.of(context).colorScheme.inverseSurface,
                             ),
                           ),
                         ),

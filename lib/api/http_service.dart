@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class HttpService {
-  Future<http.Response> get(String endpoint, {Map<String, String>? headers}) async {
-    final uri = Uri.parse(endpoint);
+  Future<http.Response> get(Uri uri, {Map<String, String>? headers}) async {
     return await http.get(uri, headers: headers);
   }
   

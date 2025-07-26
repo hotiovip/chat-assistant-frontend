@@ -6,6 +6,7 @@ import 'package:flutter_application/api/auth_http_service.dart';
 import 'package:flutter_application/api/http_service.dart';
 import 'package:flutter_application/auth/auth_service.dart';
 import 'package:flutter_application/chat/chat_message.dart';
+import 'package:flutter_application/chat/run_status.dart';
 import 'package:flutter_application/config.dart';
 
 class ChatService {
@@ -57,19 +58,40 @@ class ChatService {
       return null;
     }
   }
-  Future<List<String>?> getMessages(String threadId) async {
-    // TODO: Modify below template to gather all messages for the given threadId
-
+  Future<List<ChatMessage>?> getMessages(String threadId) async {
     try {
       final response = await _authHttpService.get(_config.messagesEndpoint(threadId));
-      if (response.statusCode != 200) {
-        // Error
+      if (response.statusCode == 200) {
+        List<dynamic> dynamicList = jsonDecode(response.body) as List<dynamic>;
+        List<ChatMessage> messages = dynamicList
+        .map((jsonItem) => ChatMessage.fromJson(jsonItem))
+        .toList();
+
+        return messages.reversed.toList();
+      }
+      else {
         return null;
       }
-
-      return null;
     } catch (e) {
       log("Exception in getMessages: $e");
+      // Exception
+      return null;
+    }
+  }
+
+  Future<RunStatus?> getRunStatus(String threadId, String runId) async {
+    try {
+      final response = await _authHttpService.get(
+        _config.statusEndpoint(threadId), 
+        queryParams: {"runId": runId});
+      if (response.statusCode == 200) {
+         return RunStatus.fromJson(jsonDecode(response.body));
+      }
+      else {
+        return null;
+      }
+    } catch (e) {
+      log("Exception in getRunStatus: $e");
       // Exception
       return null;
     }
@@ -90,7 +112,7 @@ class ChatService {
 
       return response.body;
     } catch (e) {
-      log("Exception: $e");
+      log("Exception while trying to send message: $e");
       // Exception
       return "";
     }

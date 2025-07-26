@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 
 class Config {
   final String _backendEndpoint = "http://localhost:8080";
@@ -14,6 +13,7 @@ class Config {
 
   String get chatEndpoint => "$apiEndpoint/chat";
   String get messagesRelativeEndpoint => "/messages";
+  String get statusRelativeEndpoint => "/status";
   String get sendRelativeEndpoint => "/send";
   String get fileEndpoint => "";
 
@@ -21,11 +21,15 @@ class Config {
   String get loginEndpoint => "$authEndpoint/login";
   String get isTokenValidEndpoint => "$authEndpoint/token/valid";
 
-  String sendEndpoint(String threadId) {
-    return "$chatEndpoint/$threadId/$sendRelativeEndpoint";
+  String messagesEndpoint(String threadId) {
+      return "$chatEndpoint/$threadId$messagesRelativeEndpoint";
   }
 
-  String messagesEndpoint(String threadId) {
-    return "$chatEndpoint/$threadId/$messagesRelativeEndpoint";
+  String statusEndpoint(String threadId) {
+    return "$chatEndpoint/$threadId$statusRelativeEndpoint";
+  }
+
+  String sendEndpoint(String threadId) {
+    return "$chatEndpoint/$threadId$sendRelativeEndpoint";
   }
 }

@@ -1,10 +1,10 @@
 import 'package:flutter_application/chat/role.dart';
 
 class ChatMessage {
-  final String content;
   final Role role;
+  final List<String> contentList;
 
-  ChatMessage({required this.content, required this.role});
+  ChatMessage({required this.contentList, required this.role});
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     final roleString = json['role'] as String;
@@ -15,17 +15,20 @@ class ChatMessage {
       orElse: () => Role.user, // fallback if something goes wrong
     );
 
+    // Cast json['contentList'] to List<String>
+    final contentDynamic = json['contentList'] as List<dynamic>? ?? [];
+    final contentList = contentDynamic.map((e) => e.toString()).toList();
+
     return ChatMessage(
-      content: json['content'],
       role: role,
+      contentList: contentList,
     );
   }
-
 
   Map<String, dynamic> toJson() {
     return {
       'role': role.name,
-      'content': content,
+      'contentList': contentList,
     };
   }
 }
