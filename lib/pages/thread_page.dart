@@ -3,24 +3,24 @@ import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application/chat/chat_service.dart';
+import 'package:flutter_application/chat/thread_service.dart';
 import 'package:flutter_application/chat/chat_message.dart';
 import 'package:flutter_application/chat/role.dart';
 import 'package:flutter_application/chat/run_status.dart';
 import 'package:flutter_application/chat/smooth_typing_indicator.dart';
 import 'package:flutter_application/utils.dart';
 
-class ChatPage extends StatefulWidget {
-  const ChatPage({super.key});
+class ThreadPage extends StatefulWidget {
+  const ThreadPage({super.key});
   final String title = "Chats";
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  State<ThreadPage> createState() => _ThreadPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ThreadPageState extends State<ThreadPage> {
   final _controller = TextEditingController();
-  final ChatService _chatService = ChatService();
+  final ThreadService _chatService = ThreadService();
   List<ChatMessage> _messages = [];
   List<String> _threadIds = [];
   String _currentThreadId = "";

@@ -5,7 +5,7 @@ import 'package:flutter_application/theme/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'pages/chat_page.dart';
+import 'pages/thread_page.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
   Future<Widget> _getStartPage() async {
     final authService = AuthService();
     final loggedIn = await authService.isLoggedIn();
-    return loggedIn ? const ChatPage() : const LoginPage();
+    return loggedIn ? const ThreadPage() : const LoginPage();
   }
 
   @override

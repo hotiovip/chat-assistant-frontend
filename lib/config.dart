@@ -1,4 +1,3 @@
-
 class Config {
   final String _backendEndpoint = "http://localhost:8080";
 
@@ -7,11 +6,10 @@ class Config {
   String get apiEndpoint => "$_backendEndpoint/api/v1";
 
   String get userEndpoint => "$apiEndpoint/user";
-  String get threadsEndpoint => "$userEndpoint/thread";
-  String get createThreadEndpoint => "$threadsEndpoint/create";
-  String get getThreadsEndpoint => "$threadsEndpoint/get";
 
-  String get chatEndpoint => "$apiEndpoint/chat";
+  String get threadEndpoint => "$apiEndpoint/thread";
+  String get createThreadEndpoint => "$threadEndpoint/create";
+  String get getThreadsEndpoint => "$threadEndpoint/get";
   String get messagesRelativeEndpoint => "/messages";
   String get statusRelativeEndpoint => "/status";
   String get sendRelativeEndpoint => "/send";
@@ -22,14 +20,14 @@ class Config {
   String get isTokenValidEndpoint => "$authEndpoint/token/valid";
 
   String messagesEndpoint(String threadId) {
-      return "$chatEndpoint/$threadId$messagesRelativeEndpoint";
+      return "$threadEndpoint/$threadId$messagesRelativeEndpoint";
   }
 
   String statusEndpoint(String threadId) {
-    return "$chatEndpoint/$threadId$statusRelativeEndpoint";
+    return "$threadEndpoint/$threadId$statusRelativeEndpoint";
   }
 
   String sendEndpoint(String threadId) {
-    return "$chatEndpoint/$threadId$sendRelativeEndpoint";
+    return "$threadEndpoint/$threadId$sendRelativeEndpoint";
   }
 }

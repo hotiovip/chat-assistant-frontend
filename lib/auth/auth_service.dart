@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application/api/http_service.dart';
 import 'package:flutter_application/config.dart';
 import 'package:flutter_application/auth/auth_request.dart';
-import 'package:flutter_application/pages/chat_page.dart';
+import 'package:flutter_application/pages/thread_page.dart';
 import 'package:flutter_application/pages/login_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -29,7 +29,7 @@ class AuthService {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const ChatPage()),
+        MaterialPageRoute(builder: (context) => const ThreadPage()),
         (Route<dynamic> route) => false, // Remove all previous routes
       );
     }
@@ -58,7 +58,7 @@ class AuthService {
 
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const ChatPage()),
+            MaterialPageRoute(builder: (context) => const ThreadPage()),
             (Route<dynamic> route) => false, // Remove all previous routes
           );
         } else {

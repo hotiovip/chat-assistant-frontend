@@ -9,7 +9,7 @@ import 'package:flutter_application/chat/chat_message.dart';
 import 'package:flutter_application/chat/run_status.dart';
 import 'package:flutter_application/config.dart';
 
-class ChatService {
+class ThreadService {
   final AuthHttpService _authHttpService = AuthHttpService(HttpService(), AuthService());
   final Config _config = Config();
 
