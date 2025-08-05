@@ -30,4 +30,19 @@ class AuthHttpService {
 
     return _httpService.post(url, headers: headers, body: body);
   }
+
+  Future<Response> delete(String url, {dynamic body, Map<String, String>? optionalHeaders}) async {
+    final token = await _authService.getToken();
+
+    Map<String, String> headers = {'Authorization': 'Bearer $token'};
+    if (optionalHeaders != null) headers.addAll(optionalHeaders);
+
+    // Check if body is json and add json content type header
+    // If the body is a Map or List, assume it's JSON and encode it
+    if (body is Map || body is List) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    return _httpService.delete(url, headers: headers, body: body);
+  }
 }

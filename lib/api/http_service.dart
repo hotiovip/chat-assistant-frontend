@@ -13,4 +13,11 @@ class HttpService {
         headers: headers ?? {'Content-Type': 'application/json'},
         body: body is String ? body : jsonEncode(body));
   }
+
+  Future<http.Response> delete(String endpoint, {Map<String, String>? headers, Object? body}) async {
+    final uri = Uri.parse(endpoint);
+    return await http.delete(uri,
+        headers: headers ?? {'Content-Type': 'application/json'},
+        body: body is String ? body : jsonEncode(body));
+  }
 }

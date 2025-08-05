@@ -36,8 +36,6 @@ class AuthService {
 
     try {
       final response = await _httpService.post(_config.loginEndpoint, body: authRequest);
-      log("Got response");
-
       if (!context.mounted) return;
 
       if (response.statusCode == 200) {
@@ -108,7 +106,7 @@ class AuthService {
   Future<bool> isLoggedIn() async {
     final String? token = await getToken();
     if (token != null) {
-      log("Saved token: $token");
+      // log("Saved token found: $token");
 
       try {
         final response = await http.get(
@@ -120,9 +118,11 @@ class AuthService {
         );
 
         if (response.statusCode == 200)  {
+          // log("Saved token is valid");
           return true;
         }
         else { // Token not valid anymore
+          // log("Saved token not valid");
           // Delete token from storage
           await _storage.delete(key: _config.key);
           return false;

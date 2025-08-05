@@ -12,7 +12,7 @@ import 'package:flutter_application/utils.dart';
 
 class ThreadPage extends StatefulWidget {
   const ThreadPage({super.key});
-  final String title = "Chats";
+  final String title = "Threads";
 
   @override
   State<ThreadPage> createState() => _ThreadPageState();
@@ -20,9 +20,9 @@ class ThreadPage extends StatefulWidget {
 
 class _ThreadPageState extends State<ThreadPage> {
   final _controller = TextEditingController();
-  final ThreadService _chatService = ThreadService();
+  final ThreadService _threadService = ThreadService();
   List<ChatMessage> _messages = [];
-  List<String> _threadIds = [];
+  Map<String, String> _threads = {}; // {threadId: title}
   String _currentThreadId = "";
 
   @override
@@ -32,30 +32,32 @@ class _ThreadPageState extends State<ThreadPage> {
   }
 
   Future<void> _loadChatAndSetState() async {
-    final List<String>? threadIds = await _chatService.getThreads();
-    if (threadIds != null) {
+    final List<String>? threadIds = await _threadService.getThreads();
+    if (threadIds != null && threadIds.isNotEmpty) {
       setState(() {
-        _threadIds = threadIds;
+        _threads = {
+          for (int i = 0; i < threadIds.length; i++)
+            threadIds[i]: 'Thread ${i + 1}'
+        };
       });
 
-      _selectThread(_threadIds.first);
-    }
-    else {
-      log("Thread ID is null. Creating new thread");
-      final String? threadId = await _chatService.createThread();
-      if (threadId != null) {
-        _threadIds.add(threadId);
-      }
-      else {
-        log("ERROR: Got null from createThread()");
-      }
+      // Check if the threads already have a title. if they have it save it in the map
+      _threads.forEach((threadId, title) async {
+        String? title = await _threadService.getTitle(threadId);
+        if (title != null) {
+          log("Found title for thread $threadId: $title");
+          _threads[threadId] = title;
+        }
+      });
+
+      _selectThread(_threads.keys.first);
     }
   }
   Future<void> _selectThread(String threadId) async {
     if (_currentThreadId == threadId) return;
 
     _currentThreadId = threadId;
-    final List<ChatMessage>? loadedMessages = await _chatService.getMessages(_currentThreadId);
+    final List<ChatMessage>? loadedMessages = await _threadService.getMessages(_currentThreadId);
     if (loadedMessages != null) {
       setState(() {
         _messages = loadedMessages;
@@ -67,6 +69,8 @@ class _ThreadPageState extends State<ThreadPage> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
+    final isFirstMessage = _messages.isEmpty;
+
     final userMessage = ChatMessage(role: Role.user, contentList: [text]);
     setState(() {
       _messages.add(userMessage);
@@ -75,7 +79,7 @@ class _ThreadPageState extends State<ThreadPage> {
     _controller.clear();
 
     // Send message and get runId
-    String runId = await _chatService.send(_currentThreadId, userMessage);
+    String runId = await _threadService.send(_currentThreadId, userMessage);
     log('Run ID: $runId');
 
     // Add loading placeholder
@@ -87,11 +91,11 @@ class _ThreadPageState extends State<ThreadPage> {
     RunStatus? status;
     do {
       await Future.delayed(Duration(seconds: 2));
-      status = await _chatService.getRunStatus(_currentThreadId, runId);
+      status = await _threadService.getRunStatus(_currentThreadId, runId);
     } while (status != RunStatus.completed);
 
     // Fetch latest messages after completion
-    final updatedMessages = await _chatService.getMessages(_currentThreadId);
+    final updatedMessages = await _threadService.getMessages(_currentThreadId);
 
     // Replace the placeholder with the actual assistant message
     if (updatedMessages != null) {
@@ -106,6 +110,19 @@ class _ThreadPageState extends State<ThreadPage> {
         _messages.add(newAssistantMessage);
       });
     }
+
+    // Get the threads title
+    if (isFirstMessage || _threads[_currentThreadId] == "New Thread") {
+      String? title = await _threadService.getTitle(_currentThreadId);
+      if (title != null) {
+        setState(() {
+          _threads[_currentThreadId] = title;
+        });
+      }
+      else {
+        log("Title is null");
+      }
+    }
   }
   Future<void> _pickAndUploadFile() async {
     FilePickerResult? filePickerResult = await pickFile();
@@ -115,9 +132,36 @@ class _ThreadPageState extends State<ThreadPage> {
       Uint8List? bytes = platformFile.bytes;
 
       if (bytes != null && bytes.isNotEmpty) {
-        _chatService.file(bytes);
+        _threadService.file(bytes);
       }
     }
+
+  }
+
+  Future<void> _createThread() async {
+    final String? threadId = await _threadService.createThread();
+    if (threadId != null) {
+      setState(() {
+        _threads[threadId] = 'New Thread';
+      });
+      _selectThread(threadId);
+    } else {
+      log("ERROR: Got null from createThread()");
+    }
+  }
+  Future<void> _deleteThread(String threadId) async {
+    final bool deleted = await _threadService.delete(threadId);
+    if (deleted) {
+      setState(() {
+        _threads.remove(threadId);
+
+        if (_currentThreadId == threadId) {
+          _messages.clear();
+        }
+      });
+    }
+  }
+  Future<void> _renameThread(String threadId) async {
 
   }
 
@@ -127,21 +171,67 @@ class _ThreadPageState extends State<ThreadPage> {
       appBar: AppBar(title: Text(widget.title), backgroundColor: Theme.of(context).colorScheme.primary,),
       body: Row(
         children: [
-          // Left Sidebar List
           SizedBox(
             width: 250,
-            child: ListView.builder(
-              itemCount: _threadIds.length, // Replace with your thread list
-              itemBuilder: (context, index) {
-                final threadId = _threadIds[index]; // Replace with your model
-                return ListTile(
-                  title: Text('Thread $threadId'), // Customize display
-                  onTap: () => _selectThread(threadId),
-                );
-              },
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton.icon(
+                    onPressed: _createThread,
+                    icon: Icon(Icons.add),
+                    label: Text('New Thread'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.inverseSurface,
+                      backgroundColor: Theme.of(context).colorScheme.primary // sets icon + text color
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _threads.length,
+                    itemBuilder: (context, index) {
+                      final threadId = _threads.keys.elementAt(index);
+                      final threadTitle = _threads[threadId] ?? threadId;
+
+                      return GestureDetector(
+                        onSecondaryTapDown: (details) {
+                          // Right-click on desktop or long-press on mobile (depending on platform)
+                          showMenu(
+                            context: context,
+                            position: RelativeRect.fromLTRB(
+                              0,
+                              details.globalPosition.dy,
+                              0,
+                              0,
+                            ),
+                            items: [
+                              PopupMenuItem(
+                                value: 'rename',
+                                child: Text('Rename'),
+                              ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Text('Delete'),
+                              ),
+                            ],
+                          ).then((value) {
+                            if (value == 'rename') _renameThread(threadId);
+                            if (value == 'delete') _deleteThread(threadId);
+                          });
+                        },
+                        child: ListTile(
+                          title: Text(threadTitle),
+                          onTap: () => _selectThread(threadId),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
-
+          
           // Divider between sidebar and chat
           VerticalDivider(width: 1),
 

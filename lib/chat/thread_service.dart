@@ -15,7 +15,7 @@ class ThreadService {
 
   Future<String?> createThread() async {
     try {
-      final response = await _authHttpService.get(_config.createThreadEndpoint);
+      final response = await _authHttpService.post(_config.createThreadEndpoint);
       if (response.body.trim().isNotEmpty) {
         return response.body;
       } else {
@@ -58,6 +58,22 @@ class ThreadService {
       return null;
     }
   }
+  
+  Future<String?> getTitle(String threadId) async {
+    try {
+      final response = await _authHttpService.get(_config.titleEndpoint(threadId));
+      if (response.statusCode == 200) {
+        return response.body;
+      }
+      else {
+        return null;
+      }
+    } catch (e) {
+      log("Exception in getTitle: $e");
+      // Exception
+      return null;
+    }
+  }
   Future<List<ChatMessage>?> getMessages(String threadId) async {
     try {
       final response = await _authHttpService.get(_config.messagesEndpoint(threadId));
@@ -78,7 +94,6 @@ class ThreadService {
       return null;
     }
   }
-
   Future<RunStatus?> getRunStatus(String threadId, String runId) async {
     try {
       final response = await _authHttpService.get(
@@ -97,6 +112,21 @@ class ThreadService {
     }
   }
 
+  Future<bool> delete(String threadId) async {
+    try {
+      final response = await _authHttpService.delete(_config.deleteEndpoint(threadId));
+      if (response.statusCode == 200) {
+        return true;
+      }
+      else {
+        log("Error occurred while trying to delete thread with id: $threadId");
+        return false;
+      }
+    } catch (e) {
+      log("Exception in delete: $e");
+      return false;
+    }
+  }
   Future<String> send(String threadId, ChatMessage message) async {
     try {
       final response = await _authHttpService.post(
@@ -117,7 +147,6 @@ class ThreadService {
       return "";
     }
   }
-
   Future<String> file(Uint8List bytes) async {
     try {
       final response = await _authHttpService.post(

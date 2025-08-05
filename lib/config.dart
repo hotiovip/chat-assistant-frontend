@@ -7,27 +7,35 @@ class Config {
 
   String get userEndpoint => "$apiEndpoint/user";
 
-  String get threadEndpoint => "$apiEndpoint/thread";
-  String get createThreadEndpoint => "$threadEndpoint/create";
-  String get getThreadsEndpoint => "$threadEndpoint/get";
+  String get threadEndpoint => "$apiEndpoint/threads";
+  String get createThreadEndpoint => "$threadEndpoint";
+  String get getThreadsEndpoint => "$threadEndpoint";
+
+  String get titleRelativeEndpoint => "/title";
   String get messagesRelativeEndpoint => "/messages";
   String get statusRelativeEndpoint => "/status";
-  String get sendRelativeEndpoint => "/send";
   String get fileEndpoint => "";
+
 
   String get authEndpoint => "$apiEndpoint/auth";
   String get loginEndpoint => "$authEndpoint/login";
   String get isTokenValidEndpoint => "$authEndpoint/token/valid";
 
+  String titleEndpoint(String threadId) {
+    return "$threadEndpoint/$threadId$titleRelativeEndpoint";
+  }
   String messagesEndpoint(String threadId) {
       return "$threadEndpoint/$threadId$messagesRelativeEndpoint";
   }
-
   String statusEndpoint(String threadId) {
     return "$threadEndpoint/$threadId$statusRelativeEndpoint";
   }
 
+  String deleteEndpoint(String threadId) {
+    return "$threadEndpoint/$threadId";
+  }
+
   String sendEndpoint(String threadId) {
-    return "$threadEndpoint/$threadId$sendRelativeEndpoint";
+    return "$threadEndpoint/$threadId";
   }
 }
