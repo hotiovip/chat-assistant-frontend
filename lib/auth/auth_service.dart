@@ -36,14 +36,15 @@ class AuthService {
 
     try {
       final response = await _httpService.post(_config.loginEndpoint, body: authRequest);
-      if (!context.mounted) return;
 
       if (response.statusCode == 200) {
         final String token = response.body;
         log("Got token from backend: $token");
 
         if (token.isNotEmpty) {
-          _saveToken(token);
+          await _saveToken(token);
+
+          if (!context.mounted) return;
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -60,6 +61,8 @@ class AuthService {
             (Route<dynamic> route) => false, // Remove all previous routes
           );
         } else {
+          if (!context.mounted) return;
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('No token found in response',
             style: TextStyle(color: Theme.of(context).colorScheme.inverseSurface),
@@ -69,6 +72,8 @@ class AuthService {
           );
         }
       } else {
+        if (!context.mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: ${response.statusCode}',
           style: TextStyle(color: Theme.of(context).colorScheme.inverseSurface),
@@ -113,7 +118,7 @@ class AuthService {
         Uri.parse(_config.isTokenValidEndpoint),
         headers: {
           "Content-Type": "application/json",
-          "Authorization": token
+          "Authorization": token,
           },
         );
 
@@ -129,7 +134,7 @@ class AuthService {
         }
       }
       catch (e) {
-        log(e.toString());
+        // log(e.toString());
         return false;
       }
     } 

@@ -22,7 +22,7 @@ class _ThreadPageState extends State<ThreadPage> {
   final _controller = TextEditingController();
   final ThreadService _threadService = ThreadService();
   List<ChatMessage> _messages = [];
-  Map<String, String> _threads = {}; // {threadId: title}
+  Map<String, String> _threads = {}; // {key = threadId: value = title}
   String _currentThreadId = "";
 
   @override
@@ -32,6 +32,8 @@ class _ThreadPageState extends State<ThreadPage> {
   }
 
   Future<void> _loadChatAndSetState() async {
+    log("Loading...");
+    
     final List<String>? threadIds = await _threadService.getThreads();
     if (threadIds != null && threadIds.isNotEmpty) {
       setState(() {
@@ -80,7 +82,7 @@ class _ThreadPageState extends State<ThreadPage> {
 
     // Send message and get runId
     String runId = await _threadService.send(_currentThreadId, userMessage);
-    log('Run ID: $runId');
+    // log('Run ID: $runId');
 
     // Add loading placeholder
     setState(() {
@@ -196,7 +198,6 @@ class _ThreadPageState extends State<ThreadPage> {
 
                       return GestureDetector(
                         onSecondaryTapDown: (details) {
-                          // Right-click on desktop or long-press on mobile (depending on platform)
                           showMenu(
                             context: context,
                             position: RelativeRect.fromLTRB(
@@ -222,6 +223,9 @@ class _ThreadPageState extends State<ThreadPage> {
                         },
                         child: ListTile(
                           title: Text(threadTitle),
+                          tileColor: _currentThreadId == threadId
+                              ? Theme.of(context).colorScheme.primary
+                              : null,
                           onTap: () => _selectThread(threadId),
                         ),
                       );
