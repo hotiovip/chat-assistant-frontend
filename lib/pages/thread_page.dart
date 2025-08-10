@@ -10,6 +10,8 @@ import 'package:flutter_application/chat/run_status.dart';
 import 'package:flutter_application/chat/smooth_typing_indicator.dart';
 import 'package:flutter_application/utils.dart';
 
+import 'package:gpt_markdown/gpt_markdown.dart';
+
 class ThreadPage extends StatefulWidget {
   const ThreadPage({super.key});
   final String title = "Threads";
@@ -24,6 +26,9 @@ class _ThreadPageState extends State<ThreadPage> {
   List<ChatMessage> _messages = [];
   Map<String, String> _threads = {}; // {key = threadId: value = title}
   String _currentThreadId = "";
+  Uint8List? _attachment;
+  String ? _attachmentName;
+  String? _attachmentExtension;
 
   @override
   void initState() {
@@ -73,12 +78,16 @@ class _ThreadPageState extends State<ThreadPage> {
 
     final isFirstMessage = _messages.isEmpty;
 
-    final userMessage = ChatMessage(role: Role.user, contentList: [text]);
+    final userMessage = ChatMessage(role: Role.user, contentList: [text], 
+    attachment: _attachment, attachmentName: _attachmentName, attachmentExtension: _attachmentExtension);
     setState(() {
       _messages.add(userMessage);
     });
 
     _controller.clear();
+    _attachment = null;
+    _attachmentName = null;
+    _attachmentExtension = null;
 
     // Send message and get runId
     String runId = await _threadService.send(_currentThreadId, userMessage);
@@ -126,7 +135,7 @@ class _ThreadPageState extends State<ThreadPage> {
       }
     }
   }
-  Future<void> _pickAndUploadFile() async {
+  Future<void> _pickAttachment() async {
     FilePickerResult? filePickerResult = await pickFile();
     if (filePickerResult != null) {
       // File is not null. Upload it to our backend
@@ -134,10 +143,18 @@ class _ThreadPageState extends State<ThreadPage> {
       Uint8List? bytes = platformFile.bytes;
 
       if (bytes != null && bytes.isNotEmpty) {
-        _threadService.file(bytes);
+        log("Attachment selected");
+        _attachment = bytes;
+        _attachmentName = platformFile.name.replaceAll(".${platformFile.extension}", "");
+        _attachmentExtension = platformFile.extension;
+      }
+      else {
+        log("No Attachment selected");
       }
     }
-
+    else {
+      log("No File picked");
+    }
   }
 
   Future<void> _createThread() async {
@@ -286,11 +303,12 @@ class _ThreadPageState extends State<ThreadPage> {
                                 : Theme.of(context).colorScheme.secondary,
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Text(
+                          child: GptMarkdown(
                             message.contentList.first,
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.inverseSurface,
-                            ),
+                              fontSize: 16,
+                            )
                           ),
                         ),
                       );
@@ -314,7 +332,7 @@ class _ThreadPageState extends State<ThreadPage> {
                       ),
                       IconButton(
                         icon: Icon(Icons.attach_file),
-                        onPressed: _pickAndUploadFile,
+                        onPressed: _pickAttachment,
                       ),
                       IconButton(
                         icon: Icon(Icons.send),
