@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'dart:typed_data';
 
 import 'package:flutter_application/api/auth_http_service.dart';
 import 'package:flutter_application/api/http_service.dart';
