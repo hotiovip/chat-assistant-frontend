@@ -14,7 +14,6 @@ class Config {
   String get titleRelativeEndpoint => "/title";
   String get messagesRelativeEndpoint => "/messages";
   String get statusRelativeEndpoint => "/status";
-  String get fileEndpoint => "";
 
 
   String get authEndpoint => "$apiEndpoint/auth";

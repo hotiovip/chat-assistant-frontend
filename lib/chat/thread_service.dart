@@ -147,26 +147,4 @@ class ThreadService {
       return "";
     }
   }
-  Future<String> file(Uint8List bytes) async {
-    try {
-      final response = await _authHttpService.post(
-        _config.fileEndpoint, 
-        body: bytes,
-        optionalHeaders: {
-          "Content-Type": "application/octet-stream",
-      });
-
-      if (response.statusCode != 200) {
-        log("Not 200");
-        // Error
-        return "";
-      }
-
-      return response.body;
-    } catch (e) {
-      log("Exception: $e");
-      // Exception
-      return "";
-    }
-  }
 }

@@ -31,7 +31,7 @@ Future<FilePickerResult?> pickFile() async {
   return await filePicker.pickFiles(
     dialogTitle: "Choose a file to upload",
     initialDirectory: await getDownloadPath(),
-    withReadStream: true
+    withData: true
   );
 }
 
